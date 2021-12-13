@@ -1,85 +1,131 @@
-#include "file.h"
 #include <string>
 #include <iostream>
 #include <bitset>
-#include "code.h"
+#include <cstring>
+#include <map>
+#include "file.h"
+#include "htree.h"
+#include "decode.h"
 
 using namespace std;
 
+void readcommand(string& s) {
+	char* buf = new char[1024];
+	memset(buf, 0, sizeof(char) * 1024);
+	size_t count = 0;
+	int tmp = getchar();
+	while (tmp != ' ' && tmp != '\n') {
+		buf[count] = tmp;
+		count++;
+		tmp = getchar();
+	}
+	buf[count] = '\0';
+	if (!s.empty()) {
+		s.clear();
+	}
+	s.resize(count);
+	for (int i = 0; i <= count; ++i) {
+		s[i] = buf[i];
+	}
+	return;
+}
+
+inline void printcli() {
+	cout << ">>> ";
+}
+
 int main() {
 	string command;
-	cin >> command;
-	if (command == "zip") {
-		string dir, des;
-		cin >> dir >> des;
-		file::getalltxt(dir);
-		std::vector<std::string> res;
-		file::readres(res);
-		std::string tmp;
-		bool isrelative=!(file::switchtype(dir));
-		auto local = file::getlocaldir();
-		if (isrelative) {
-			local += '\\';
-			local += dir;
-			std::cout << local << std::endl;
-		}
-		for (int i = 0; i < (int)res.size(); ++i) {
-			file::readfromfile(res[i], tmp);
+	printcli();
+	readcommand(command);
+	while (command != "exit") {
+		if (command == "zip") {
+			string dir, des;
+			cin >> dir >> des;
+			getchar();
+			file::getalltxt(dir);
+			std::vector<std::string> res;
+			file::readres(res);
+			std::string tmp;
+			bool isrelative = !(file::switchtype(dir));
+			auto local = file::getlocaldir();
 			if (isrelative) {
-				int n = local.length();
-				res[i] = res[i].substr(n+1);
+				local += '\\';
+				local += dir;
+				//std::cout << local << std::endl;
+			}
+			for (int i = 0; i < (int)res.size(); ++i) {
+				file::readfromfile(res[i], tmp);
+				if (isrelative) {
+					int n = local.length();
+					res[i] = res[i].substr(n + 1);
+				}
+				else {
+					int n = dir.length();
+					res[i] = res[i].substr(n + 1);
+				}
+				res[i] += " ";
+				res[i] += tmp;
+				tmp.clear();
+			}
+			for (const auto& x : res) {
+				std::cout << x << std::endl;
+			}
+			HTree htree;
+			htree.code(res);
+			std::vector<std::string> ans;
+			transtohaff(res, ans, htree);
+			file::save(ans, des);
+			htree.save(des);
+		}
+		else if (command == "unzip") {
+			FILE* p = NULL;
+			string ans;
+			string dir, des;
+			cin >> dir >> des;
+			getchar();
+			bool isrelative = !(file::switchtype(dir));//是否是相对路径
+			string local = file::getlocaldir();
+			if (isrelative) {
+				local += "\\";
+				local += dir;
+				p = fopen(local.c_str(), "rb");
 			}
 			else {
-				int n = dir.length();
-				res[i] = res[i].substr(n + 1);
+				p = fopen(dir.c_str(), "rb");
 			}
-			res[i] += " ";
-			res[i] += tmp;
-			tmp.clear();
-		}
-		for (const auto& x : res) {
-			std::cout << x << std::endl;
-		}
-		auto save = code(res);
-		file::save(save, des);
-	}
-	else if (command == "unzip") {
-		string ans;
-		std::ifstream readin;
-		string dir, des;
-		cin >> dir >> des;
-		bool isrelative = !(file::switchtype(dir));
-		string local = file::getlocaldir();
-		if(isrelative){
-			local+="\\";
-			local += dir;
-			readin.open(local);
-		}
-		else {
-			readin.open(dir);
-		}
-		if (readin.is_open()) {
-			char tmp;
-			string s;
-			while (readin.get(tmp)) {
-				if (tmp != ' ' && tmp != '\n') {
-					s.push_back(tmp);
+			if (p!=NULL) {
+				unsigned long long val[2]; 
+				fread(val, sizeof(unsigned long long), 2, p);
+				auto s = val[0];
+				auto add = val[1];
+				auto tmpbul = new unsigned long long[s];
+				fread(tmpbul, sizeof(unsigned long long), s, p);
+				fclose(p);
+				p = NULL;
+				if (isrelative) {
+					p = fopen(local.c_str(), "r");
 				}
-				else if(tmp==' ') {
-					unsigned long long t = stoull(s);
-					s.clear();
-					std::bitset<8> t1(t);
-					ans += t1.to_string();
+				else {
+					p = fopen(dir.c_str(), "r");
 				}
-				else if (tmp == '\n') {
-					int lastlen = stoi(s);
-					string tmp1 = ans.substr(ans.length() - 8);
-					string tmp2 = tmp1.substr(0,lastlen);
-					ans = ans.substr(0, ans.length() - 8);
-					ans += tmp2;
+				fseek(p, sizeof(unsigned long long) * (s + 2), SEEK_CUR);
+				std::map<std::string,int>mp;
+				readhaff(mp, p);
+				std::string bitstr;
+				for (size_t i = 0; i < s; ++i) {
+					bitset<file::width> tmp(tmpbul[i]);
+					bitstr += (tmp.to_string());
 				}
+				bitstr = bitstr.substr(0, bitstr.length() - add);
+				std::string out;
+				decode(mp, bitstr, out);
+				std::cout << out << std::endl;
+				fclose(p);
 			}
-			//ans为bitstream
 		}
+		command.clear();
+		printcli();
+		readcommand(command);
 	}
 }

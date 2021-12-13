@@ -7,7 +7,7 @@
 #include <fstream>
 
 namespace file {
-	const unsigned int width = 8;
+	const unsigned int width = 64;
 
 	const char dira[] = "cmd /r dir ";
 	const char dirb[] = "\\*.txt /s/b >> dir.tmp";
