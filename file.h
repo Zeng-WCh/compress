@@ -5,6 +5,7 @@
 #include <vector>
 #include <bitset>
 #include <fstream>
+#include <cstring>
 
 namespace file {
 	const unsigned int width = 64;

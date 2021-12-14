@@ -202,12 +202,18 @@ int main() {
 				std::cout << "Unzip Complete" << std::endl;
 				fclose(p);
 			}
-			else if (command == "cls" || command == "clean" || command == "clear") {
-				system("cls");
-			}
-			else if (command == "help") {
-				printhelp();
-			}
+		}
+		else if (command == "cls" || command == "clean" || command == "clear") {
+			system("cls");
+		}
+		else if (command == "help") {
+			printhelp();
+		}
+		else if (command == "dir" || command == "ls") {
+			system("dir");
+		}
+		else if(!command.empty()) {
+			std::cout << command << " is an unknown command" << std::endl;
 		}
 		command.clear();
 		printcli();

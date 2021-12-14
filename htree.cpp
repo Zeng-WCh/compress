@@ -141,6 +141,7 @@ std::string HTree::find(const char c) const{
 			return x.codes;
 		}
 	}
+	return "";
 }
 
 void HTree::get_code(std::vector<struct code>& list) const{
