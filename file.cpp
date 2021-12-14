@@ -8,6 +8,18 @@
 #include <iostream>
 
 
+void file::savefiledir(const std::vector<std::string>& res,const std::string &dir){
+	std::ofstream out;
+	out.open(dir, std::ios::app);
+	if (out.is_open()) {
+		auto it = res.begin();
+		while (it != res.end()) {
+			out << *it << '\n';
+			++it;
+		}
+	}
+}
+
 void file::save(const std::vector<std::string>& des, const std::string& filename) {
 	FILE* p=NULL;
 	p = fopen(filename.c_str(), "wb");
@@ -38,6 +50,10 @@ void file::save(const std::vector<std::string>& des, const std::string& filename
 	fprintf(p, "\n");
 	fclose(p);
 	delete[] buf;
+	std::ofstream out;
+	out.open(filename, std::ios::app|std::ios::binary);
+	out << (unsigned long long) des.size() << '\n';
+	out.close();
 }
 
 std::string file::getlocaldir() {//获取程序当前运行路径

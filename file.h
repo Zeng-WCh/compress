@@ -13,6 +13,8 @@ namespace file {
 	const char dirb[] = "\\*.txt /s/b >> dir.tmp";
 	const char dirname[] = "dir.tmp";
 
+	void savefiledir(const std::vector<std::string>&, const std::string&);
+
 	template<size_t _size>
 	inline void savebittofile(const std::bitset<_size>& s, const std::string& filename) {
 		std::fstream out;
